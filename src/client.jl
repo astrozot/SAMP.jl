@@ -91,6 +91,19 @@ Julia keywords can be passed with the `var"long.name"` syntax. For example
 
     setMetadata(client; var"samp.description.text"="A fast FITS image displayer")
 
+Standard metadata can be entered using a shorter syntax. In particular, the
+following aliases are recognized
+
+```
+name => samp.name
+description => samp.description.text
+icon => samp.icon.url
+documentation => samp.documentation.url
+```
+
+Note that, by design, if no icon is provided this function uses a standard
+icon; if no icon is desired, enter `icon=""` as keyword parameter.
+
 If this function is called multiple times, the latest metadata are kept (all
 the others are discarded). Both functions are identical: `declareMetadata` is
 just an alias for `setMetadata`, kept to honour the original SAMP command.
@@ -100,6 +113,9 @@ function setMetadata(client::SAMPClient; kw...)
     for (k, v) ∈ kw
         sk = string(k)
         metadata[get(metadata_aliases, sk, sk)] = string(v)
+    end
+    if !haskey(metadata, "samp.icon.url")
+        metadata["samp.icon.url"] = "https://astrozot.github.io/SAMP.jl/dev/assets/logo.png"
     end
     methodName = "$(methodPrefix(client)).declareMetadata"
     client.hub.proxy[methodName](client.key, metadata)
