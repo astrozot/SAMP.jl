@@ -14,10 +14,10 @@ export SAMPHub, SAMPWebHub, ping, SAMPClient, register, unregister,
     callAndWait
 
 function test()
-    # hub = SAMPHub()
-    hub = SAMPWebHub()
-    client = register(hub, "Gravity2.jl")
-    setMetadata(client; description="An effecient gravitational lens modeling software",
+    hub = SAMPHub()
+    # hub = SAMPWebHub()
+    client = register(hub, "Gravity3.jl";
+        description="An effecient gravitational lens modeling software",
         version=v"1.3.1", icon="https://astrozot.github.io/Gravity.jl/assets/logo.png",
         documentation="https://astrozot.github.io/Gravity.jl/")
     ds9 = first(getSubscribedClients(client, "ds9.get"))

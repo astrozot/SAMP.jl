@@ -47,8 +47,8 @@ function Base.getindex(proxy::Proxy, s::AbstractString)
         res = try
             HTTP.post(proxy.url, headers, string(xdoc))
         finally
-            @warn headers
-            @warn string(xdoc)
+            @debug headers
+            @debug string(xdoc)
             free(xdoc)
         end
         if res.status!= 200
@@ -88,8 +88,6 @@ end
 function rpc_arg(x::XMLElement, p)
     add_text(new_child(new_child(x, "value"), "string"), string(p))
 end
-
-# TODO new_child for base64
 
 function rpc_arg(x::XMLElement, p::Vector)
     d = new_child(new_child(new_child(x, "value"), "array"), "data")

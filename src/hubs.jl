@@ -1,5 +1,23 @@
+"""
+The parent of [`SAMPHub`](@ref) and [`SAMPWebHub`](@ref).
+"""
 abstract type AbstractSAMPHub end
 
+"""
+    SAMPHub <: [`AbstractSAMPHub`](@ref)
+
+A local SAMP hub.
+
+Can be created by a simple call `SAMPHub()`: all fields are automatically set
+following the SAMP protocl.
+
+# Members
+- proxy: the XMLRPC proxy associated with the hub
+- url: the hub URL
+- secret: the hub secret (used for the client registration)
+- version: the hub version, as a string
+- conf: a dictionary with all hub configuration parameters
+"""
 struct SAMPHub <: AbstractSAMPHub
     proxy::XMLRPC.Proxy
     url::String
@@ -47,9 +65,36 @@ struct SAMPHub <: AbstractSAMPHub
     end
 end
 
-ping(hub::SAMPHub) = hub.proxy["samp.hub.ping"]()
+"""
+    ping(hub)
+
+Ping the `hub`.
+
+This function retunrs `nothing` if the hub can be pinged; otherwise, an error
+is thrown.
+"""
+ping(hub::SAMPHub) = (hub.proxy["samp.hub.ping"](); nothing)
+
+"""
+    methodPrefix(hub)
+    methodPrefix(client)
+
+Return "samp.hub" or "samp.webhub" depending on the hub type.
+"""
 methodPrefix(::SAMPHub) = "samp.hub"
 
+"""
+    SAMPWebHub <: [`AbstractSAMPHub`](@ref)
+
+A Web SAMP hub.
+
+Can be created by a simple call `SAMPWebHub()`: all fields are automatically set
+following the SAMP protocl.
+
+# Members
+- proxy: the XMLRPC proxy associated with the hub
+- url: the hub URL (always equal to "http://localhost:21012/")
+"""
 struct SAMPWebHub <: AbstractSAMPHub
     proxy::XMLRPC.Proxy
     url::String
@@ -61,5 +106,5 @@ struct SAMPWebHub <: AbstractSAMPHub
     end
 end
 
-ping(hub::SAMPWebHub) = hub.proxy["samp.webhub.ping"]()
+ping(hub::SAMPWebHub) = (hub.proxy["samp.webhub.ping"](); nothing)
 methodPrefix(::SAMPWebHub) = "samp.webhub"

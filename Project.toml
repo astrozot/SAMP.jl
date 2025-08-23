@@ -1,6 +1,6 @@
 name = "SAMP"
 uuid = "71edce32-5052-4cae-8257-5b1cf32090e7"
-authors = ["Marco Lombardi <marco.lombardi@gmail.com> and contributors"]
+authors = ["Marco Lombardi"]
 version = "1.0.0-DEV"
 
 [deps]
