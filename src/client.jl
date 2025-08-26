@@ -34,8 +34,8 @@ struct SAMPClient{H<:AbstractSAMPHub}
     translator::String
 end
 
-function SAMPClient(hub::SAMPHub, name::String)
-    registration = hub.proxy["samp.hub.register"](hub.secret)
+function SAMPClient(hub::SAMPHub, name::String; iterations=3, sleeptime=0.2)
+    registration = @robust hub.proxy["samp.hub.register"](hub.secret)
     key = registration["samp.private-key"]
     hub_id = registration["samp.hub-id"]
     client_id = registration["samp.self-id"]
@@ -43,7 +43,7 @@ function SAMPClient(hub::SAMPHub, name::String)
 end
 
 function SAMPClient(hub::SAMPWebHub, name::String)
-    registration = hub.proxy["samp.webhub.register"](Dict("samp.name" => name))
+    registration = @robust hub.proxy["samp.webhub.register"](Dict("samp.name" => name))
     key = registration["samp.private-key"]
     hub_id = registration["samp.hub-id"]
     client_id = registration["samp.self-id"]
@@ -58,7 +58,7 @@ methodPrefix(::SAMPClient{SAMPWebHub}) = "samp.webhub"
 function register(hub::AbstractSAMPHub, name::String; kw...)
     client = SAMPClient(hub, name)
     if length(kw) > 0
-        setMetadata(client; kw...)
+        @robust setMetadata(client; kw...)
     end
     client
 end
@@ -70,7 +70,8 @@ Unregister `client` from the associated hub.
 """
 function unregister(client::SAMPClient)
     methodName = "$(methodPrefix(client)).unregister"
-    client.hub.proxy[methodName](client.key)
+    @robust client.hub.proxy[methodName](client.key)
+    nothing
 end
 
 const metadata_aliases = Dict(
@@ -118,7 +119,8 @@ function setMetadata(client::SAMPClient; kw...)
         metadata["samp.icon.url"] = "https://astrozot.github.io/SAMP.jl/dev/assets/logo.png"
     end
     methodName = "$(methodPrefix(client)).declareMetadata"
-    client.hub.proxy[methodName](client.key, metadata)
+    @robust client.hub.proxy[methodName](client.key, metadata)
+    nothing
 end
 
 @doc (@doc setMetadata)
@@ -131,7 +133,7 @@ Return the metadata set for the client with the given `id`.
 """
 function getMetadata(client::SAMPClient, client_id=client.client_id)
     methodName = "$(methodPrefix(client)).getMetadata"
-    client.hub.proxy[methodName](client.key, client_id)
+    convert(Dict{String,String}, @robust client.hub.proxy[methodName](client.key, client_id))
 end
 
 """
@@ -141,7 +143,7 @@ Return the subscriptions for the client with the given `id`.
 """
 function getSubscriptions(client::SAMPClient, client_id)
     methodName = "$(methodPrefix(client)).getSubscriptions"
-    collect(keys(client.hub.proxy[methodName](client.key, client_id)))
+    collect(keys(convert(Dict{String,Any}, @robust client.hub.proxy[methodName](client.key, client_id))))
 end
 
 """
@@ -151,7 +153,7 @@ Return a list of all clients registered with the hub of `client`.
 """
 function getRegisteredClients(client::SAMPClient)
     methodName = "$(methodPrefix(client)).getRegisteredClients"
-    client.hub.proxy[methodName](client.key)
+    convert(Vector{String}, @robust client.hub.proxy[methodName](client.key))
 end
 
 """
@@ -161,7 +163,7 @@ Return a list of all clients that subscribed to the given `mtype`.
 """
 function getSubscribedClients(client::SAMPClient, mtype::String)
     methodName = "$(methodPrefix(client)).getSubscribedClients"
-    collect(keys(client.hub.proxy[methodName](client.key, mtype)))
+    convert(Vector{String}, collect(keys(@robust client.hub.proxy[methodName](client.key, mtype))))
 end
 
 """
@@ -178,7 +180,7 @@ The optional message arguments can be passed as keywords: as with
 """
 function Base.notify(client::SAMPClient, dest::String, mtype::String; kw...)
     methodName = "$(methodPrefix(client)).notify"
-    client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw))
+    @robust client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw))
     nothing
 end
 
@@ -191,7 +193,7 @@ See also: [`notify`](@ref)
 """
 function notifyAll(client::SAMPClient, mtype::String; kw...)
     methodName = "$(methodPrefix(client)).notifyAll"
-    client.hub.proxy[methodName](client.key, Dict("samp.mtype" => mtype, "samp.params" => kw))
+    @robust client.hub.proxy[methodName](client.key, Dict("samp.mtype" => mtype, "samp.params" => kw))
     nothing
 end
 
@@ -209,5 +211,61 @@ case the client can wait indefinitely.
 """
 function callAndWait(client::SAMPClient, dest::String, mtype::String; timeout=0, kw...)
     methodName = "$(methodPrefix(client)).callAndWait"
-    SAMPResult(client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw), string(timeout)))
+    SAMPResult(@robust client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw), string(timeout)))
+end
+
+"""
+    findFirstClient(client, name)
+
+Return the first client with the metadata `samp.name = name`
+
+Returns `nothing` if no client is found.
+
+`name` can be a simple string (and then it must match exactly `samp.name`), or
+a regular expression.
+
+Equivalent to `first(findFirstClient(client, name))`, but with less
+allocations.
+"""
+function findFirstClient(client::SAMPClient, name::String)
+    clients = getRegisteredClients(client)
+    index = findfirst(clients) do c
+        get(getMetadata(client, c), "samp.name", "") == name
+    end
+    if isnothing(index)
+        nothing
+    else
+        clients[index]
+    end
+end
+
+function findFirstClient(client::SAMPClient, name::Regex)
+    clients = getRegisteredClients(client)
+    index = findfirst(clients) do c
+        match(name, get(getMetadata(client, c), "samp.name", "")) !== nothing
+    end
+    if isnothing(index)
+        nothing
+    else
+        clients[index]
+    end
+end
+
+
+"""
+    findFirstClient(client, name)
+
+Return all clients with the metadata `samp.name = name`
+
+`name` can be a simple string (and then it must match exactly `samp.name`), or
+a regular expression.
+"""
+function findAllClients(client::SAMPClient, name::String)
+    [id for id ∈ getRegisteredClients(client)
+     if get(getMetadata(client, id), "samp.name", "") == name]
+end
+
+function findAllClients(client::SAMPClient, name::Regex)
+    [id for id ∈ getRegisteredClients(client)
+     if match(name, get(getMetadata(client, id), "samp.name", "")) !== nothing]
 end

@@ -11,7 +11,7 @@ include("client.jl")
 export SAMPHub, SAMPWebHub, ping, SAMPClient, register, unregister, 
     declareMetadata, setMetadata, getMetadata, getSubscriptions,
     getRegisteredClients, getSubscribedClients, notify, notifyAll,
-    callAndWait
+    callAndWait, findFirstClient, findAllClients
 
 function test()
     hub = SAMPHub()

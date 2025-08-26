@@ -20,4 +20,6 @@ SAMP.getSubscribedClients
 Base.notify(::SAMPClient, ::String, ::String)
 SAMP.notifyAll
 SAMP.callAndWait
+SAMP.findFirstClient
+SAMP.findAllClient
 ```

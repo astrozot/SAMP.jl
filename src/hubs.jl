@@ -9,7 +9,7 @@ abstract type AbstractSAMPHub end
 A local SAMP hub.
 
 Can be created by a simple call `SAMPHub()`: all fields are automatically set
-following the SAMP protocl.
+following the SAMP protocol.
 
 # Members
 - proxy: the XMLRPC proxy associated with the hub
@@ -58,7 +58,7 @@ struct SAMPHub <: AbstractSAMPHub
         end
         url = conf["samp.hub.xmlrpc.url"]
         proxy = XMLRPC.Proxy(url)
-        proxy["samp.hub.ping"]()
+        @robust proxy["samp.hub.ping"]()
         secret = conf["samp.secret"]
         version = conf["samp.profile.version"]
         new(proxy, url, secret, version, conf)
@@ -73,7 +73,7 @@ Ping the `hub`.
 This function retunrs `nothing` if the hub can be pinged; otherwise, an error
 is thrown.
 """
-ping(hub::SAMPHub) = (hub.proxy["samp.hub.ping"](); nothing)
+ping(hub::SAMPHub) = (@robust hub.proxy["samp.hub.ping"](); nothing)
 
 """
     methodPrefix(hub)
@@ -101,7 +101,7 @@ struct SAMPWebHub <: AbstractSAMPHub
     function SAMPWebHub()
         url = "http://localhost:21012/"
         proxy = XMLRPC.Proxy(url)
-        proxy["samp.webhub.ping"]()
+        @robust proxy["samp.webhub.ping"]()
         new(proxy, url)
     end
 end
