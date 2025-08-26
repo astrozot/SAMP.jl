@@ -21,5 +21,5 @@ Base.notify(::SAMPClient, ::String, ::String)
 SAMP.notifyAll
 SAMP.callAndWait
 SAMP.findFirstClient
-SAMP.findAllClient
+SAMP.findAllClients
 ```

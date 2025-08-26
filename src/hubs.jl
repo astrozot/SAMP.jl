@@ -4,7 +4,7 @@ The parent of [`SAMPHub`](@ref) and [`SAMPWebHub`](@ref).
 abstract type AbstractSAMPHub end
 
 """
-    SAMPHub <: [`AbstractSAMPHub`](@ref)
+    SAMPHub <: [`SAMP.AbstractSAMPHub`](@ref)
 
 A local SAMP hub.
 
@@ -84,7 +84,7 @@ Return "samp.hub" or "samp.webhub" depending on the hub type.
 methodPrefix(::SAMPHub) = "samp.hub"
 
 """
-    SAMPWebHub <: [`AbstractSAMPHub`](@ref)
+    SAMPWebHub <: [`SAMP.AbstractSAMPHub`](@ref)
 
 A Web SAMP hub.
 

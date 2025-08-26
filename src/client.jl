@@ -1,5 +1,5 @@
 """
-`SAMPClient{H <:`[`AbstractSAMPHub`](@ref)`}`
+`SAMPClient{H <:`[`SAMP.AbstractSAMPHub`](@ref)`}`
 
 A structure representing a SAMP client.
 
