@@ -15,6 +15,8 @@ The same structure is used for clients of a [`SAMPHub`](@ref) or of
 - `client_id`: the id the hud has assigned to the client
 - `translator`: the URL translator (only present if the server is a
   [`SAMPWebHub`](@ref))
+- `hub_query_by_meta`: a string that, if non-void, indicates the mtype accepted
+  by the hub to perform queries by meta (can be "x-samp.query.by-meta" or "samp.query.by-meta")
 
 # Contructors
 
@@ -31,6 +33,7 @@ struct SAMPClient{H<:AbstractSAMPHub}
     key::String
     hub_id::String
     client_id::String
+    hub_query_by_meta::String
     translator::String
 end
 
@@ -39,7 +42,17 @@ function SAMPClient(hub::SAMPHub, name::String; iterations=3, sleeptime=0.2)
     key = registration["samp.private-key"]
     hub_id = registration["samp.hub-id"]
     client_id = registration["samp.self-id"]
-    SAMPClient(hub, name, key, hub_id, client_id, "")
+    # Find the server subscriptions
+    hub_subscriptions = collect(keys(convert(Dict{String,Any},
+        @robust hub.proxy["samp.hub.getSubscriptions"](key, hub_id))))
+    if "samp.query.by-meta" ∈ hub_subscriptions
+        hub_query_by_meta = "samp.query.by-meta"
+    elseif "x-samp.query.by-meta" ∈ hub_subscriptions
+        hub_query_by_meta = "x-samp.query.by-meta"
+    else
+        hub_query_by_meta = ""
+    end
+    SAMPClient(hub, name, key, hub_id, client_id, hub_query_by_meta, "")
 end
 
 function SAMPClient(hub::SAMPWebHub, name::String)
@@ -48,7 +61,16 @@ function SAMPClient(hub::SAMPWebHub, name::String)
     hub_id = registration["samp.hub-id"]
     client_id = registration["samp.self-id"]
     translator = registration["samp.url-translator"]
-    SAMPClient(hub, name, key, hub_id, client_id, translator)
+    hub_subscriptions = collect(keys(convert(Dict{String,Any},
+        @robust hub.proxy["samp.webhub.getSubscriptions"](key, hub_id))))
+    if "samp.query.by-meta" ∈ hub_subscriptions
+        hub_query_by_meta = "samp.query.by-meta"
+    elseif "x-samp.query.by-meta" ∈ hub_subscriptions
+        hub_query_by_meta = "x-samp.query.by-meta"
+    else
+        hub_query_by_meta = ""
+    end
+    SAMPClient(hub, name, key, hub_id, client_id, hub_query_by_meta, translator)
 end
 
 methodPrefix(::SAMPClient{SAMPHub}) = "samp.hub"
@@ -215,22 +237,32 @@ function callAndWait(client::SAMPClient, dest::String, mtype::String; timeout=0,
 end
 
 """
-    findFirstClient(client, name)
+    findFirstClient(client, name; key="samp.name")
 
-Return the first client with the metadata `samp.name = name`
+Return the first client with the metadata `key = name`
 
 Returns `nothing` if no client is found.
 
-`name` can be a simple string (and then it must match exactly `samp.name`), or
+`name` can be a simple string (and then it must match exactly `key`), or
 a regular expression.
 
 Equivalent to `first(findFirstClient(client, name))`, but with less
 allocations.
 """
-function findFirstClient(client::SAMPClient, name::String)
+function findFirstClient(client::SAMPClient, name::String; key="samp.name")
+    if client.hub_query_by_meta != ""
+        result = callAndWait(client, client.hub_id, client.hub_query_by_meta; key=key, value=name)
+        if isa(result, SAMP.SAMPSuccess)
+            if length(result.value["ids"]) > 0
+                return String(first(result.value["ids"])) :: String
+            else
+                return nothing
+            end
+        end
+    end
     clients = getRegisteredClients(client)
     index = findfirst(clients) do c
-        get(getMetadata(client, c), "samp.name", "") == name
+        get(getMetadata(client, c), key, "") == name
     end
     if isnothing(index)
         nothing
@@ -239,10 +271,10 @@ function findFirstClient(client::SAMPClient, name::String)
     end
 end
 
-function findFirstClient(client::SAMPClient, name::Regex)
+function findFirstClient(client::SAMPClient, name::Regex; key="samp.name")
     clients = getRegisteredClients(client)
     index = findfirst(clients) do c
-        match(name, get(getMetadata(client, c), "samp.name", "")) !== nothing
+        match(name, get(getMetadata(client, c), key, "")) !== nothing
     end
     if isnothing(index)
         nothing
@@ -253,19 +285,25 @@ end
 
 
 """
-    findFirstClient(client, name)
+    findFirstClient(client, name; key="samp.name")
 
-Return all clients with the metadata `samp.name = name`
+Return all clients with the metadata `key = name`
 
-`name` can be a simple string (and then it must match exactly `samp.name`), or
+`name` can be a simple string (and then it must match exactly `key`), or
 a regular expression.
 """
-function findAllClients(client::SAMPClient, name::String)
+function findAllClients(client::SAMPClient, name::String; key="samp.name")
+    if client.hub_query_by_meta != ""
+        result = callAndWait(client, client.hub_id, client.hub_query_by_meta; key=key, value=name)
+        if isa(result, SAMP.SAMPSuccess)
+            return convert(Vector{String}, result.value["ids"]) :: Vector{String}
+        end
+    end
     [id for id ∈ getRegisteredClients(client)
-     if get(getMetadata(client, id), "samp.name", "") == name]
+     if get(getMetadata(client, id), key, "") == name]
 end
 
-function findAllClients(client::SAMPClient, name::Regex)
+function findAllClients(client::SAMPClient, name::Regex; key="samp.name")
     [id for id ∈ getRegisteredClients(client)
-     if match(name, get(getMetadata(client, id), "samp.name", "")) !== nothing]
+     if match(name, get(getMetadata(client, id), key, "")) !== nothing]
 end

@@ -1,22 +1,14 @@
-function robust_call(f; iterations=3, delay=0.1)
-    iter = 1
-    sleeptime = delay
-    while true
-        try
-            res = f()
-            return res
-        catch e
-            if iter < iterations
-                sleep(sleeptime)
-                sleeptime *= 2
-                iter += 1
-            else
-                rethrow(e)
-            end
-        end
-    end
-end
+"""
+    @robust [iterations=3] [delay=0.1] [verbose=false] f()
 
+Call `f()` in a robust way.
+
+This macro calls up to `iterations` times `f`, each time with a doubling
+delay, and starting with an initial `delay`. If `verbose=true`, a warning is
+shown if one intermediate call of `f` fails.
+
+If all calls to `f` fail, the last error message is rethrown.
+"""
 macro robust(args...)
     iterations = 3
     delay = 0.1
@@ -44,6 +36,7 @@ macro robust(args...)
     if isnothing(e)
         throw(ArgumentError("Missing function argument in macro @robust"))
     end
+    error_message = "The call failed after $iterations retries with initial delay $delay s"
     return quote
         iter = 1
         sleeptime = $(esc(delay))
@@ -61,7 +54,7 @@ macro robust(args...)
                     sleeptime *= 2
                     iter += 1
                 else
-                    @error "The call failed after $iterations retries with initial delay $delay s"
+                    @error $(esc(error_message))
                     rethrow(err)
                 end
             end
