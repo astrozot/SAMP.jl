@@ -9,7 +9,8 @@ include("sampresult.jl")
 include("client.jl")
 include("defaults.jl")
 
-export SAMPHub, SAMPWebHub, ping, SAMPClient, register, unregister, 
+export SAMPHub, SAMPWebHub, ping, SAMPClient, SAMPClientId,
+    register, unregister, 
     declareMetadata, setMetadata, getMetadata, getSubscriptions,
     getRegisteredClients, getSubscribedClients, notify, notifyAll,
     callAndWait, findFirstClient, findAllClients

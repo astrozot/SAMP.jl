@@ -3,6 +3,7 @@
 ## Object
 
 ```@docs
+SAMP.SAMPClientId
 SAMP.SAMPClient
 SAMP.register
 SAMP.defaultClient
@@ -27,7 +28,7 @@ SAMP.getMetadata
 SAMP.getSubscriptions
 SAMP.getRegisteredClients
 SAMP.getSubscribedClients
-Base.notify(::SAMPClient, ::String, ::String)
+Base.notify(::SAMPClient, ::SAMPClientId, ::String)
 SAMP.notifyAll
 SAMP.callAndWait
 SAMP.findFirstClient

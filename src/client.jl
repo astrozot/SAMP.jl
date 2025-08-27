@@ -1,4 +1,17 @@
 """
+    SAMPClientId
+
+A simple structure to save the client ID of a SAMP client.
+
+This structure contains a single string field, `client_id`. It is defined only
+to avoid type piracy and to resolve some parameter ambiguities in the code.
+"""
+struct SAMPClientId
+    client_id::String
+end
+
+
+"""
 `SAMPClient{H <:`[`SAMP.AbstractSAMPHub`](@ref)`}`
 
 A structure representing a SAMP client.
@@ -11,12 +24,15 @@ The same structure is used for clients of a [`SAMPHub`](@ref) or of
 - `name`: the name of the client (compulsory)
 - `key`: a string representing the secret key used by the client to contact
   the server
-- `hub_id`: the id the hub has assigned to himself
-- `client_id`: the id the hud has assigned to the client
+- `hub_id`: the id the hub has assigned to himself, as a
+  [`SAMPClientId`](@ref)
+- `client_id`: the id the hud has assigned to the client, as a
+  [`SAMPClientId`](@ref)
 - `translator`: the URL translator (only present if the server is a
   [`SAMPWebHub`](@ref))
-- `hub_query_by_meta`: a string that, if non-void, indicates the mtype accepted
-  by the hub to perform queries by meta (can be "x-samp.query.by-meta" or "samp.query.by-meta")
+- `hub_query_by_meta`: a string that, if non-void, indicates the mtype
+  accepted by the hub to perform queries by meta (can be
+  "x-samp.query.by-meta" or "samp.query.by-meta")
 
 # Contructors
 
@@ -31,8 +47,8 @@ struct SAMPClient{H<:AbstractSAMPHub}
     hub::H
     name::String
     key::String
-    hub_id::String
-    client_id::String
+    hub_id::SAMPClientId
+    client_id::SAMPClientId
     hub_query_by_meta::String
     translator::String
 end
@@ -43,11 +59,11 @@ const _registeredClients = SAMPClient[]
 function SAMPClient(hub::SAMPHub, name::String; iterations=3, sleeptime=0.2)
     registration = @robust hub.proxy["samp.hub.register"](hub.secret)
     key = registration["samp.private-key"]
-    hub_id = registration["samp.hub-id"]
-    client_id = registration["samp.self-id"]
+    hub_id = SAMPClientId(registration["samp.hub-id"])
+    client_id = SAMPClientId(registration["samp.self-id"])
     # Find the server subscriptions
     hub_subscriptions = collect(keys(convert(Dict{String,Any},
-        @robust hub.proxy["samp.hub.getSubscriptions"](key, hub_id))))
+        @robust hub.proxy["samp.hub.getSubscriptions"](key, hub_id.client_id))))
     if "samp.query.by-meta" ∈ hub_subscriptions
         hub_query_by_meta = "samp.query.by-meta"
     elseif "x-samp.query.by-meta" ∈ hub_subscriptions
@@ -63,11 +79,11 @@ end
 function SAMPClient(hub::SAMPWebHub, name::String)
     registration = @robust hub.proxy["samp.webhub.register"](Dict("samp.name" => name))
     key = registration["samp.private-key"]
-    hub_id = registration["samp.hub-id"]
-    client_id = registration["samp.self-id"]
+    hub_id = SAMPClientId(registration["samp.hub-id"])
+    client_id = SAMPClientId(registration["samp.self-id"])
     translator = registration["samp.url-translator"]
     hub_subscriptions = collect(keys(convert(Dict{String,Any},
-        @robust hub.proxy["samp.webhub.getSubscriptions"](key, hub_id))))
+        @robust hub.proxy["samp.webhub.getSubscriptions"](key, hub_id.client_id))))
     if "samp.query.by-meta" ∈ hub_subscriptions
         hub_query_by_meta = "samp.query.by-meta"
     elseif "x-samp.query.by-meta" ∈ hub_subscriptions
@@ -176,24 +192,24 @@ end
 
 Return the metadata set for the client `dest`.
 """
-function getMetadata(client::SAMPClient, dest::String=client.client_id)
+function getMetadata(client::SAMPClient, dest::SAMPClientId=client.client_id)
     methodName = "$(methodPrefix(client)).getMetadata"
-    convert(Dict{String,String}, @robust client.hub.proxy[methodName](client.key, dest))
+    convert(Dict{String,String}, @robust client.hub.proxy[methodName](client.key, dest.client_id))
 end
 
-@inline getMetadata(dest::String) = getMetadata(getClient(), dest)
+@inline getMetadata(dest::SAMPClientId) = getMetadata(getClient(), dest)
 
 """
     getSubscriptions([client,] dest)
 
 Return the subscriptions for the client `dest`.
 """
-function getSubscriptions(client::SAMPClient, dest::String)
+function getSubscriptions(client::SAMPClient, dest::SAMPClientId)
     methodName = "$(methodPrefix(client)).getSubscriptions"
-    collect(keys(convert(Dict{String,Any}, @robust client.hub.proxy[methodName](client.key, dest))))
+    collect(keys(convert(Dict{String,Any}, @robust client.hub.proxy[methodName](client.key, dest.client_id))))
 end
 
-@inline getSubscriptions(dest::String) = getSubscriptions(getClient(), dest)
+@inline getSubscriptions(dest::SAMPClientId) = getSubscriptions(getClient(), dest)
 
 """
     getRegisteredClients([client])
@@ -219,7 +235,6 @@ end
 
 """
     notify(client, dest, mtype [; args...])
-    communicate([client,] dest, mtype [; args...])
 
 Notify the message `mtype` with the optional arguments `args` to `dest`.
 
@@ -232,18 +247,16 @@ The optional message arguments can be passed as keywords: as with
 
 The alias `communicate` is used to avoid type piracy.
 """
-function Base.notify(client::SAMPClient, dest::String, mtype::String; kw...)
+function Base.notify(client::SAMPClient, dest::SAMPClientId, mtype::String; kw...)
     methodName = "$(methodPrefix(client)).notify"
-    @robust client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw))
+    @robust client.hub.proxy[methodName](client.key, dest.client_id, Dict("samp.mtype" => mtype, "samp.params" => kw))
     nothing
 end
 
-@inline communicate(client::SAMPClient, dest::String, mtype::String; kw...) = notify(client, dest, mtype; kw...)
-@inline communicate(dest::String, mtype::String; kw...) = notify(getClient(), dest, mtype; kw...)
+@inline Base.notify(dest::SAMPClientId, mtype::String; kw...) = notify(getClient(), dest, mtype; kw...)
 
 """
     notifyAll([client,] mtype [; args...])
-    communicateAll([client,] mtype [; args...])
 
 Notify the message `mtype` to all clients.
 
@@ -271,12 +284,12 @@ The `timeout` keyword controls the timeout in seconds: if set to 0 or to a
 negative number, there is no timeout (this is the default). Note that in this
 case the client can wait indefinitely.
 """
-function callAndWait(client::SAMPClient, dest::String, mtype::String; timeout=0, kw...)
+function callAndWait(client::SAMPClient, dest::SAMPClientId, mtype::String; timeout=0, kw...)
     methodName = "$(methodPrefix(client)).callAndWait"
-    SAMPResult(@robust client.hub.proxy[methodName](client.key, dest, Dict("samp.mtype" => mtype, "samp.params" => kw), string(timeout)))
+    SAMPResult(@robust client.hub.proxy[methodName](client.key, dest.client_id, Dict("samp.mtype" => mtype, "samp.params" => kw), string(timeout)))
 end
 
-@inline callAndWait(dest::String, mtype::String; timeout=0, kw...) = 
+@inline callAndWait(dest::SAMPClientId, mtype::String; timeout=0, kw...) = 
     callAndWait(getClient(), dest, mtype; timeout, kw...)
 
 """
@@ -285,10 +298,10 @@ end
 
 Ping `id`; return `nothing` in case of success.
 """
-ping(client::SAMPClient, dest::String=client.client_id) = 
+ping(client::SAMPClient, dest::SAMPClientId=client.client_id) = 
     isa(callAndWait(client, dest, "samp.app.ping"), SAMPSuccess) ? nothing : error("A call to `ping` failed")
 
-@inline ping(dest::String) = ping(getClient(), dest)
+@inline ping(dest::SAMPClientId) = ping(getClient(), dest)
 
 """
     findFirstClient([client,] name; key="samp.name")
