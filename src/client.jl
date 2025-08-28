@@ -8,9 +8,10 @@ to avoid type piracy and to resolve some parameter ambiguities in the code.
 """
 struct SAMPClientId
     client_id::String
+    function SAMPClientId(client_id)
+        new(string(client_id))
+    end
 end
-
-SAMPClientId(client_id) = SAMPClientId(string(client_id))
 
 """
 `SAMPClient{H <:`[`SAMP.AbstractSAMPHub`](@ref)`}`
