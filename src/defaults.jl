@@ -38,7 +38,7 @@ Return the default client.
 
 This function also sets it the first time it is called.
 """
-function getClient()
+function getClient()::SAMPClient{SAMPHub}
     global defaultClient
     if isnothing(defaultClient)
         defaultClient = register(getHub(), "Julia"; description="Julia default client",

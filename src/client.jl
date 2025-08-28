@@ -10,6 +10,7 @@ struct SAMPClientId
     client_id::String
 end
 
+SAMPClientId(client_id) = SAMPClientId(string(client_id))
 
 """
 `SAMPClient{H <:`[`SAMP.AbstractSAMPHub`](@ref)`}`
@@ -34,7 +35,7 @@ The same structure is used for clients of a [`SAMPHub`](@ref) or of
   accepted by the hub to perform queries by meta (can be
   "x-samp.query.by-meta" or "samp.query.by-meta")
 
-# Contructors
+# Constructors
 
     SAMPClient([hub,] name)
     register([hub,] name [; metadata])
@@ -218,7 +219,8 @@ Return a list of all clients registered with the hub of `client`.
 """
 function getRegisteredClients(client::SAMPClient=getClient())
     methodName = "$(methodPrefix(client)).getRegisteredClients"
-    convert(Vector{String}, @robust client.hub.proxy[methodName](client.key))
+    [SAMPClientId(id) for id ∈ convert(Vector{String}, 
+        @robust client.hub.proxy[methodName](client.key))]
 end
 
 """
@@ -228,13 +230,14 @@ Return a list of all clients that subscribed to the given `mtype`.
 """
 function getSubscribedClients(client::SAMPClient, mtype::String)
     methodName = "$(methodPrefix(client)).getSubscribedClients"
-    convert(Vector{String}, collect(keys(@robust client.hub.proxy[methodName](client.key, mtype))))
+    [SAMPClientId(id::String) for id ∈ convert(Vector{String}, 
+        keys(@robust client.hub.proxy[methodName](client.key, mtype)))]
 end
 
-@inline getSubscribedClients(mtype::String) = getSubscriptions(getClient(), mtype)
+@inline getSubscribedClients(mtype::String) = getSubscribedClients(getClient(), mtype)
 
 """
-    notify(client, dest, mtype [; args...])
+    notify([client,] dest, mtype [; args...])
 
 Notify the message `mtype` with the optional arguments `args` to `dest`.
 
@@ -269,8 +272,6 @@ function notifyAll(client::SAMPClient, mtype::String; kw...)
 end
 
 @inline notifyAll(mtype::String; kw...) = notifyAll(getClient(), mtype; kw...)
-@inline communicateAll(client::SAMPClient, mtype::String; kw...) = notifyAll(client, mtype; kw...)
-@inline communicateAll(mtype::String; kw...) = notifyAll(getClient(), mtype; kw...)
 
 """
     callAndWait([client,] dest, mtype; timeout=0 [, args...])
@@ -321,7 +322,7 @@ function findFirstClient(client::SAMPClient, name::String; key="samp.name")
         result = callAndWait(client, client.hub_id, client.hub_query_by_meta; key=key, value=name)
         if isa(result, SAMP.SAMPSuccess)
             if length(result.value["ids"]) > 0
-                return String(first(result.value["ids"])) :: String
+                return SAMPClientId(first(result.value["ids"]))
             else
                 return nothing
             end
@@ -365,8 +366,8 @@ a regular expression.
 function findAllClients(client::SAMPClient, name::String; key="samp.name")
     if client.hub_query_by_meta != ""
         result = callAndWait(client, client.hub_id, client.hub_query_by_meta; key=key, value=name)
-        if isa(result, SAMP.SAMPSuccess)
-            return convert(Vector{String}, result.value["ids"]) :: Vector{String}
+        if isa(result, SAMPSuccess)
+            return SAMPClientId.(convert(Vector{String}, result.value["ids"]) :: Vector{String})
         end
     end
     [id for id ∈ getRegisteredClients(client)
