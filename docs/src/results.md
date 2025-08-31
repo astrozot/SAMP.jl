@@ -1,8 +1,8 @@
 # SAMP Results
 
 ```@docs
-SAMP.SAMPResult
-SAMP.SAMPSuccess
-SAMP.SAMPError
-SAMP.SAMPWarning
+VirtualObservatorySAMP.SAMPResult
+VirtualObservatorySAMP.SAMPSuccess
+VirtualObservatorySAMP.SAMPError
+VirtualObservatorySAMP.SAMPWarning
 ```

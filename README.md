@@ -1,6 +1,6 @@
-# SAMP
+# VirtualObservatorySAMP
 
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://astrozot.github.io/SAMP.jl/dev/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://astrozot.github.io/VirtualObservatorySAMP.jl/dev/)
 
 This package provides a Julia implementation of the [Simple Application
 Messaging Protocol (SAMP)](https://www.ivoa.net/documents/SAMP/), a messaging
@@ -25,12 +25,12 @@ DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9) on your local compute
 Then type the following commands on the Julia REPL:
 
 ```julia-repl
-julia> using SAMP
+julia> using VirtualObservatorySAMP
 
 julia> hub = SAMPHub();
 
 julia> client = register(hub, "Test"; 
-       description="Simple test of SAMP.jl", version=v"1.0.0");
+       description="Simple test of VirtualObservatorySAMP.jl", version=v"1.0.0");
 
 julia> ds9 = first(getSubscribedClients(client, "ds9.get"))
 "c2"
@@ -48,7 +48,7 @@ Dict{Any, Any} with 9 entries:
   "author.email"           => "ds9help@cfa.harvard.edu"
 
 julia> callAndWait(client, ds9, "ds9.get"; cmd="version")
-SAMP.SAMPSuccess{Dict{Any, Any}}(Dict{Any, Any}("value" => "ds9 8.6"))
+VirtualObservatorySAMP.SAMPSuccess{Dict{Any, Any}}(Dict{Any, Any}("value" => "ds9 8.6"))
 
 julia> notify(client, ds9, "image.load.fits"; 
        url="https://fits.gsfc.nasa.gov/samples/UITfuv2582gc.fits", name="Astro UIT")

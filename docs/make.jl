@@ -1,14 +1,14 @@
-using SAMP
+using VirtualObservatorySAMP
 using Documenter
 
-DocMeta.setdocmeta!(SAMP, :DocTestSetup, :(using SAMP); recursive=true)
+DocMeta.setdocmeta!(VirtualObservatorySAMP, :DocTestSetup, :(using VirtualObservatorySAMP); recursive=true)
 
 makedocs(;
-    modules=[SAMP],
+    modules=[VirtualObservatorySAMP],
     authors="Marco Lombardi",
-    sitename="SAMP.jl",
+    sitename="VirtualObservatorySAMP.jl",
     format=Documenter.HTML(;
-        canonical="https://astrozot.github.io/SAMP.jl",
+        canonical="https://astrozot.github.io/VirtualObservatorySAMP.jl",
         edit_link="main",
         assets=["assets/favicon/favicon.ico"],
     ),
@@ -24,6 +24,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/astrozot/SAMP.jl",
+    repo="github.com/astrozot/VirtualObservatorySAMP.jl",
     devbranch="master",
 )

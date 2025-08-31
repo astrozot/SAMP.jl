@@ -1,10 +1,10 @@
 # Hub discovery
 
 ```@docs
-SAMP.AbstractSAMPHub
-SAMP.SAMPHub
-SAMP.SAMPWebHub
-SAMP.defaultHub
-SAMP.getHub
-SAMP.ping
+VirtualObservatorySAMP.AbstractSAMPHub
+VirtualObservatorySAMP.SAMPHub
+VirtualObservatorySAMP.SAMPWebHub
+VirtualObservatorySAMP.defaultHub
+VirtualObservatorySAMP.getHub
+VirtualObservatorySAMP.ping
 ```

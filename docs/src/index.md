@@ -1,8 +1,8 @@
 ```@meta
-CurrentModule = SAMP
+CurrentModule = VirtualObservatorySAMP
 ```
 
-# SAMP
+# VirtualObservatorySAMP
 
 This package provides a Julia implementation of the [Simple Application
 Messaging Protocol (SAMP)](https://www.ivoa.net/documents/SAMP/), a messaging
@@ -27,14 +27,14 @@ Open [TOPCAT](https://www.star.bris.ac.uk/~mbt/topcat/), then type the
 following commands on the Julia REPL:
 
 ```julia-repl
-julia> using SAMP
+julia> using VirtualObservatorySAMP
 
 julia> hub = SAMPHub();
 
 julia> client = register(hub, "Test"; 
-       description="Simple test of SAMP.jl", version=v"1.0.0");
+       description="Simple test of VirtualObservatorySAMP.jl", version=v"1.0.0");
 
-julia> topcat = findFirstClient(clients, "topcat")
+julia> topcat = findFirstClient(client, "topcat")
 
 julia> getSubscriptions(client, topcat)
 
@@ -44,7 +44,9 @@ julia> unregister(client)
 ## Example 2
 
 In this example we send various messages to [SAOImage
-DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9).
+DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9). Additionally, we
+make use of a simplified calls: the first argument (`client`) is automatically
+replaced by the default client `VirtualObservatorySAMP.defaultClient`.
 
 Open [TOPCAT](https://www.star.bris.ac.uk/~mbt/topcat/) and, then, [SAOImage
 DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9) on your local computer.
@@ -52,17 +54,12 @@ DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9) on your local compute
 Then type the following commands on the Julia REPL:
 
 ```julia-repl
-julia> using SAMP
+julia> using VirtualObservatorySAMP
 
-julia> hub = SAMPHub();
-
-julia> client = register(hub, "Test"; 
-       description="Simple test of SAMP.jl", version=v"1.0.0");
-
-julia> ds9 = first(getSubscribedClients(client, "ds9.get"))
+julia> ds9 = first(getSubscribedClients("ds9.get"))
 "c2"
 
-julia> getMetadata(client, ds9)
+julia> getMetadata(ds9)
 Dict{Any, Any} with 9 entries:
   "samp.icon.url"          => "http://ds9.si.edu/sun.png"
   "author.name"            => "William Joye"
@@ -74,13 +71,16 @@ Dict{Any, Any} with 9 entries:
   "samp.name"              => "ds9"
   "author.email"           => "ds9help@cfa.harvard.edu"
 
-julia> callAndWait(client, ds9, "ds9.get"; cmd="version")
-SAMP.SAMPSuccess{Dict{Any, Any}}(Dict{Any, Any}("value" => "ds9 8.6"))
+julia> callAndWait(ds9, "ds9.get"; cmd="version")
+VirtualObservatorySAMP.SAMPSuccess{Dict{Any, Any}}(Dict{Any, Any}("value" => "ds9 8.6"))
 
-julia> notify(client, ds9, "image.load.fits"; 
+julia> notify(ds9, "image.load.fits"; 
        url="https://fits.gsfc.nasa.gov/samples/UITfuv2582gc.fits", name="Astro UIT")
 
-julia> unregister(client)
+julia> unregister()
+
+julia> @assert VirtualObservatorySAMP.defaultClient === nothing
+
 ```
 
 ## Example 3
@@ -90,12 +90,12 @@ DS9](https://sites.google.com/cfa.harvard.edu/saoimageds9). Start as a in the
 previous example, then type the following commands:
 
 ```julia-repl
-julia> using SAMP
+julia> using VirtualObservatorySAMP
 
 julia> hub = SAMPHub();
 
 julia> client = register(hub, "Test"; 
-       description="Simple test of SAMP.jl", version=v"1.0.0");
+       description="Simple test of VirtualObservatorySAMP.jl", version=v"1.0.0");
 
 julia> ds9 = first(getSubscribedClients(client, "ds9.get"))
 "c2"

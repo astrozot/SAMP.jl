@@ -14,7 +14,7 @@ struct SAMPClientId
 end
 
 """
-`SAMPClient{H <:`[`SAMP.AbstractSAMPHub`](@ref)`}`
+`SAMPClient{H <:`[`VirtualObservatorySAMP.AbstractSAMPHub`](@ref)`}`
 
 A structure representing a SAMP client.
 
@@ -178,7 +178,7 @@ function setMetadata(client::SAMPClient=getClient(); kw...)
         metadata[get(metadata_aliases, sk, sk)] = string(v)
     end
     if !haskey(metadata, "samp.icon.url")
-        metadata["samp.icon.url"] = "https://astrozot.github.io/SAMP.jl/dev/assets/logo.png"
+        metadata["samp.icon.url"] = "https://astrozot.github.io/VirtualObservatorySAMP.jl/dev/assets/logo.png"
     end
     methodName = "$(methodPrefix(client)).declareMetadata"
     @robust client.hub.proxy[methodName](client.key, metadata)
@@ -231,8 +231,9 @@ Return a list of all clients that subscribed to the given `mtype`.
 """
 function getSubscribedClients(client::SAMPClient, mtype::String)
     methodName = "$(methodPrefix(client)).getSubscribedClients"
-    [SAMPClientId(id::String) for id ∈ convert(Vector{String}, 
-        keys(@robust client.hub.proxy[methodName](client.key, mtype)))]
+    [SAMPClientId(id::String) for id ∈ 
+        keys(convert(Dict{String, Any}, 
+            @robust client.hub.proxy[methodName](client.key, mtype)))]
 end
 
 @inline getSubscribedClients(mtype::String) = getSubscribedClients(getClient(), mtype)
@@ -321,7 +322,7 @@ allocations.
 function findFirstClient(client::SAMPClient, name::String; key="samp.name")
     if client.hub_query_by_meta != ""
         result = callAndWait(client, client.hub_id, client.hub_query_by_meta; key=key, value=name)
-        if isa(result, SAMP.SAMPSuccess)
+        if isa(result, SAMPSuccess)
             if length(result.value["ids"]) > 0
                 return SAMPClientId(first(result.value["ids"]))
             else

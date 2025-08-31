@@ -3,34 +3,34 @@
 ## Object
 
 ```@docs
-SAMP.SAMPClientId
-SAMP.SAMPClient
-SAMP.register
-SAMP.defaultClient
-SAMP.getClient
+VirtualObservatorySAMP.SAMPClientId
+VirtualObservatorySAMP.SAMPClient
+VirtualObservatorySAMP.register
+VirtualObservatorySAMP.defaultClient
+VirtualObservatorySAMP.getClient
 ```
 
 ## Methods
 
-All methods can use the default client [`SAMP.defaultClient`](@ref), which is
-automatically registered using the [`SAMP.getClient](@ref) method. This can be
+All methods can use the default client [`VirtualObservatorySAMP.defaultClient`](@ref), which is
+automatically registered using the [`VirtualObservatorySAMP.getClient](@ref) method. This can be
 handy if one just need to perform queries and not receive messages.
 
 Each registered client (including the default one) should be unregistered by a
-call to [`SAMP.unregister](@ref) when not needed anymore. This is done
+call to [`VirtualObservatorySAMP.unregister](@ref) when not needed anymore. This is done
 automatically by the code at the exit of Julia.
 
 ```@docs
-SAMP.unregister
-SAMP.setMetadata
-SAMP.declareMetadata
-SAMP.getMetadata
-SAMP.getSubscriptions
-SAMP.getRegisteredClients
-SAMP.getSubscribedClients
+VirtualObservatorySAMP.unregister
+VirtualObservatorySAMP.setMetadata
+VirtualObservatorySAMP.declareMetadata
+VirtualObservatorySAMP.getMetadata
+VirtualObservatorySAMP.getSubscriptions
+VirtualObservatorySAMP.getRegisteredClients
+VirtualObservatorySAMP.getSubscribedClients
 Base.notify(::SAMPClient, ::SAMPClientId, ::String)
-SAMP.notifyAll
-SAMP.callAndWait
-SAMP.findFirstClient
-SAMP.findAllClients
+VirtualObservatorySAMP.notifyAll
+VirtualObservatorySAMP.callAndWait
+VirtualObservatorySAMP.findFirstClient
+VirtualObservatorySAMP.findAllClients
 ```
