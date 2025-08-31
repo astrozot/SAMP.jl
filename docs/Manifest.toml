@@ -241,7 +241,7 @@ git-tree-sha1 = "ffd19052caf598b8653b99404058fce14828be51"
 uuid = "2792f1a3-b283-48e8-9a74-f99dce5104f3"
 version = "0.1.0"
 
-[[deps.SAMP]]
+[[deps.VirtualObservatorySAMP]]
 path = ".."
 uuid = "71edce32-5052-4cae-8257-5b1cf32090e7"
 version = "1.0.0-DEV"
