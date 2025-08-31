@@ -14,7 +14,7 @@ struct SAMPClientId
 end
 
 """
-`SAMPClient{H <:`[`VirtualObservatorySAMP.AbstractSAMPHub`](@ref)`}`
+    SAMPClient{H <: AbstractSAMPHub}
 
 A structure representing a SAMP client.
 
